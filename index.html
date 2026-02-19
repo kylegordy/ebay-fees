@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eBay Fee Calculator</title>
+  <meta name="description" content="Calculate eBay seller fees, promoted listing costs, and net profit by category. Mobile-friendly with live updates.">
+  <meta name="theme-color" content="#0654ba">
+  <meta property="og:title" content="eBay Fee Calculator">
+  <meta property="og:description" content="Calculate eBay seller fees, promoted listing costs, and net profit by category.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,11 +24,13 @@
     header {
       background: #0654ba;
       color: #fff;
-      padding: 1rem 1.25rem;
-      text-align: center;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 100%;
     }
     header h1 { font-size: 1.25rem; font-weight: 600; }
-
     .container {
       max-width: 480px;
       margin: 0 auto;
@@ -157,6 +165,57 @@
       margin-top: 0.25rem;
     }
 
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .toggle-label input { display: none; }
+    .toggle-switch {
+      width: 44px;
+      height: 26px;
+      background: #ccc;
+      border-radius: 13px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle-label input:checked + .toggle-switch {
+      background: #0654ba;
+    }
+    .toggle-label input:checked + .toggle-switch::after {
+      transform: translateX(18px);
+    }
+
+    .header-toggle {
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      margin: 0;
+    }
+    .header-toggle .toggle-switch {
+      background: rgba(255,255,255,0.5);
+    }
+    .header-toggle input:checked + .toggle-switch {
+      background: #4ade80;
+    }
+    .header-toggle input:checked + .toggle-switch::after {
+      background: #fff;
+    }
+
     footer {
       text-align: center;
       font-size: 0.75rem;
@@ -171,16 +230,31 @@
 <body>
   <header>
     <h1>eBay Fee Calculator</h1>
+    <label class="toggle-label header-toggle">
+      <span>Store Subscriber</span>
+      <input type="checkbox" id="storeToggle" checked>
+      <span class="toggle-switch"></span>
+    </label>
   </header>
 
   <div class="container">
     <div class="card">
-      <h2>Sale Details</h2>
+      <h2>Item Details</h2>
       <div class="field">
-        <label for="category">Category</label>
+        <label for="costOfGoods">Item Cost</label>
+        <div class="input-prefix">
+          <input type="number" id="costOfGoods" min="0" step="0.01" placeholder="0.00" value="0" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label for="category">Item Category</label>
         <select id="category"></select>
         <div class="category-rate" id="categoryRate"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Sale Details</h2>
       <div class="field">
         <label for="price">Sale Price</label>
         <div class="input-prefix">
@@ -227,6 +301,10 @@
         <span class="label">Shipping Cost</span>
         <span class="value negative" id="shippingCost">-$0.00</span>
       </div>
+      <div class="results-row" id="cogRow" style="display:none">
+        <span class="label">Item Cost</span>
+        <span class="value negative" id="cogValue">-$0.00</span>
+      </div>
       <div class="results-row net">
         <span class="label">You Keep</span>
         <span class="value" id="netProfit">$0.00</span>
@@ -242,70 +320,99 @@
   <script>
     const categories = [
       {
-        name: 'Most categories',
+        name: 'Most Categories',
         tiers: [{ rate: 0.136, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.127, upTo: 2500 }, { rate: 0.0235 }],
         perOrder: true
       },
       {
         name: 'Books, Movies & TV, Music',
         tiers: [{ rate: 0.153, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.153, upTo: 2500 }, { rate: 0.0235 }],
+        perOrder: true
+      },
+      {
+        name: 'Cell Phones & Electronics',
+        tiers: [{ rate: 0.136, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.0935, upTo: 2500 }, { rate: 0.0235 }],
+        perOrder: true
+      },
+      {
+        name: 'Computers & Tablets',
+        tiers: [{ rate: 0.136, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.0935, upTo: 2500 }, { rate: 0.0235 }],
+        perOrder: true
+      },
+      {
+        name: 'Video Games & Consoles',
+        tiers: [{ rate: 0.136, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.0935, upTo: 2500 }, { rate: 0.0235 }],
         perOrder: true
       },
       {
         name: 'Coins & Paper Money',
         tiers: [{ rate: 0.1325, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.09, upTo: 4000 }, { rate: 0.0235 }],
         perOrder: true
       },
       {
         name: 'Bullion',
         tiers: [{ rate: 0.136, upTo: 7500 }, { rate: 0.07 }],
+        storeTiers: [{ rate: 0.075, upTo: 1500 }, { rate: 0.05, upTo: 10000 }, { rate: 0.045 }],
         perOrder: true
       },
       {
         name: 'Collectible Trading Cards',
         tiers: [{ rate: 0.1325, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.1235, upTo: 2500 }, { rate: 0.0235 }],
         perOrder: true
       },
       {
         name: "Women's Bags & Handbags",
         tiers: [{ rate: 0.15, upTo: 2000 }, { rate: 0.09 }],
+        storeTiers: [{ rate: 0.13, upTo: 2000 }, { rate: 0.07 }],
         perOrder: true
       },
       {
         name: 'Jewelry & Watches',
         tiers: [{ rate: 0.15, upTo: 5000 }, { rate: 0.09 }],
+        storeTiers: [{ rate: 0.13, upTo: 5000 }, { rate: 0.07 }],
         perOrder: true
       },
       {
         name: 'Watches, Parts & Accessories',
         tiers: [{ rate: 0.15, upTo: 1000 }, { rate: 0.065, upTo: 7500 }, { rate: 0.03 }],
+        storeTiers: [{ rate: 0.125, upTo: 1000 }, { rate: 0.04, upTo: 5000 }, { rate: 0.03 }],
         perOrder: true
       },
       {
         name: 'Guitars & Basses',
         tiers: [{ rate: 0.067, upTo: 7500 }, { rate: 0.0235 }],
+        storeTiers: [{ rate: 0.067, upTo: 2500 }, { rate: 0.0235 }],
         perOrder: true
       },
       {
         name: 'Heavy Equipment',
         tiers: [{ rate: 0.03, upTo: 15000 }, { rate: 0.005 }],
+        storeTiers: [{ rate: 0.025, upTo: 15000 }, { rate: 0.005 }],
         perOrder: true
       },
       {
         name: 'Athletic Shoes ($150+)',
         tiers: [{ rate: 0.08 }],
-        perOrder: false,
-        minPrice: 150
+        storeTiers: [{ rate: 0.07 }],
+        perOrder: false
       },
       {
         name: 'Athletic Shoes (under $150)',
         tiers: [{ rate: 0.136 }],
-        perOrder: true,
-        maxPrice: 149.99
+        storeTiers: [{ rate: 0.127 }],
+        perOrder: true
       },
       {
         name: 'NFTs',
         tiers: [{ rate: 0.05 }],
+        storeTiers: [{ rate: 0.05 }],
         perOrder: false
       }
     ];
@@ -314,7 +421,9 @@
 
     const categoryEl = document.getElementById('category');
     const categoryRateEl = document.getElementById('categoryRate');
+    const storeToggleEl = document.getElementById('storeToggle');
     const priceEl = document.getElementById('price');
+    const cogEl = document.getElementById('costOfGoods');
     const shippingEl = document.getElementById('shipping');
     const adRateEl = document.getElementById('adRate');
 
@@ -328,6 +437,8 @@
     const totalFeesEl = document.getElementById('totalFees');
     const shippingCostRowEl = document.getElementById('shippingCostRow');
     const shippingCostEl = document.getElementById('shippingCost');
+    const cogRowEl = document.getElementById('cogRow');
+    const cogValueEl = document.getElementById('cogValue');
     const netProfitEl = document.getElementById('netProfit');
 
     // Populate category dropdown
@@ -338,10 +449,10 @@
       categoryEl.appendChild(opt);
     });
 
-    function tierDescription(cat) {
-      const parts = cat.tiers.map((t, i) => {
+    function tierDescription(tiers) {
+      const parts = tiers.map((t, i) => {
         const pct = (t.rate * 100).toFixed(t.rate * 100 % 1 === 0 ? 0 : 2) + '%';
-        if (cat.tiers.length === 1) return pct;
+        if (tiers.length === 1) return pct;
         if (t.upTo) return `${pct} up to ${fmt.format(t.upTo)}`;
         return `${pct} above`;
       });
@@ -374,16 +485,19 @@
 
     function calculate() {
       const price = parseFloat(priceEl.value) || 0;
+      const cog = parseFloat(cogEl.value) || 0;
       const shipping = parseFloat(shippingEl.value) || 0;
       const adRate = parseFloat(adRateEl.value) || 0;
+      const isStore = storeToggleEl.checked;
       const cat = categories[categoryEl.value];
       const totalSale = price + shipping;
+      const tiers = isStore ? cat.storeTiers : cat.tiers;
 
       // Category rate description
-      categoryRateEl.textContent = tierDescription(cat);
+      categoryRateEl.textContent = tierDescription(tiers);
 
       // Final value fee
-      const fvf = calcFinalValueFee(totalSale, cat.tiers);
+      const fvf = calcFinalValueFee(totalSale, tiers);
 
       // Per-order fee
       let perOrder = 0;
@@ -395,11 +509,11 @@
       const adFee = totalSale * (adRate / 100);
 
       const totalFees = fvf + perOrder + adFee;
-      const net = totalSale - totalFees - shipping;
+      const net = totalSale - totalFees - shipping - cog;
 
       // Build FVF label
-      if (cat.tiers.length === 1) {
-        fvfLabelEl.textContent = `Final Value Fee (${(cat.tiers[0].rate * 100).toFixed(cat.tiers[0].rate * 100 % 1 === 0 ? 0 : 2)}%)`;
+      if (tiers.length === 1) {
+        fvfLabelEl.textContent = `Final Value Fee (${(tiers[0].rate * 100).toFixed(tiers[0].rate * 100 % 1 === 0 ? 0 : 2)}%)`;
       } else {
         fvfLabelEl.textContent = 'Final Value Fee (tiered)';
       }
@@ -426,13 +540,21 @@
         shippingCostRowEl.style.display = 'none';
       }
 
+      if (cog > 0) {
+        cogRowEl.style.display = '';
+        cogValueEl.textContent = '-' + fmt.format(cog);
+      } else {
+        cogRowEl.style.display = 'none';
+      }
+
       netProfitEl.textContent = fmt.format(net);
     }
 
     // Live calculation on any input change
-    [categoryEl, priceEl, shippingEl, adRateEl].forEach(el => {
+    [categoryEl, priceEl, cogEl, shippingEl, adRateEl].forEach(el => {
       el.addEventListener('input', calculate);
     });
+    storeToggleEl.addEventListener('change', calculate);
 
     calculate();
   </script>
